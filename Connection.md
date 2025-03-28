@@ -173,3 +173,36 @@ export AWS_SECRET_NAME="your-db-secret"
 export AWS_REGION="us-east-1"
 java -jar myapp.jar
 ```
+
+
+```java
+@Override
+public void onApplicationEvent(ApplicationEnvironmentPreparedEvent event) {
+    ConfigurableEnvironment env = event.getEnvironment();
+
+    // Load TrustStore Properties from application.properties or application.yml
+    String trustStorePath = env.getProperty("server.ssl.trust-store");
+    String trustStorePassword = env.getProperty("server.ssl.trust-store-password");
+
+    if (trustStorePath != null) {
+        URL resource = getClass().getClassLoader().getResource(trustStorePath);
+        if (resource != null) {
+            System.setProperty("javax.net.ssl.trustStore", resource.getPath());
+        } else {
+            throw new RuntimeException("TrustStore file not found: " + trustStorePath);
+        }
+    }
+
+    if (trustStorePassword != null) {
+        System.setProperty("javax.net.ssl.trustStorePassword", trustStorePassword);
+    }
+
+    // Load Database Properties
+    String dataSourceUrl = env.getProperty("spring.datasource.url");
+    String dataSourceDriver = env.getProperty("spring.datasource.driverClassName");
+
+    System.out.println("DataSource URL: " + dataSourceUrl);
+    System.out.println("Using TrustStore: " + System.getProperty("javax.net.ssl.trustStore"));
+}
+
+```
